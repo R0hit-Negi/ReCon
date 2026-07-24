@@ -16,4 +16,6 @@ Before launching the tool, verify that your models are installed and running on 
    ```bash
    OLLAMA_ORIGINS="*" ollama serve
 
+### Step 2: Run index.html code in any folder
+
 ### Do Not Referesh Page 
