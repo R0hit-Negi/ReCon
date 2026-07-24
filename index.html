@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Ground Truth Evaluation Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        header h1 { font-size: 1.75rem; font-weight: 700; color: #fff; }
+        header p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.35rem; color: var(--text-secondary); }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            color: var(--text-primary);
+            padding: 0.625rem;
+            font-size: 0.875rem;
+        }
+        textarea { resize: vertical; min-height: 150px; font-family: monospace; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.625rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: var(--accent-hover); }
+        button.secondary { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
+        button.secondary:hover { background-color: var(--border-color); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 1rem; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--text-secondary); font-weight: 600; }
+
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600; }
+        .badge-success { background-color: rgba(16, 185, 129, 0.2); color: var(--success-color); }
+        .badge-danger { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+        .metric-card { background-color: #0f172a; border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem; text-align: center; }
+        .metric-card .label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+        .metric-card .value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin-top: 0.25rem; }
+
+        .confusion-matrix { display: grid; grid-template-columns: auto 1fr 1fr; gap: 0.5rem; align-items: center; text-align: center; margin-top: 1rem; font-size: 0.875rem; }
+        .cm-cell { background-color: #0f172a; border: 1px solid var(--border-color); padding: 1rem; border-radius: 0.375rem; }
+        .cm-header { font-weight: 600; color: var(--text-secondary); }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: #0f172a;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            margin-top: 0.35rem;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .checkbox-group label { display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); cursor: pointer; }
+        .chart-container { position: relative; height: 300px; width: 100%; margin-top: 1rem; background: #0f172a; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 1rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>LLM Ground Truth Evaluation Engine</h1>
+            <p>Manage prompts, fetch live local models, execute runs sequentially/parallelly, and analyze metrics.</p>
+        </div>
+        <button class="secondary" onclick="fetchLocalModels()">🔄 Refresh Local Models</button>
+    </header>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-prompts')">Tab-1: Prompts & Test Suite</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-run')">Tab-2: Run Evaluations</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-results')">Tab-3: Results & Analytics</button>
+    </div>
+
+    <!-- TAB 1 -->
+    <div id="tab-prompts" class="tab-pane active">
+        <div class="card">
+            <h2>Add New Test Case / Prompt</h2>
+            <div class="form-group">
+                <label for="promptText">Prompt Payload (System & User Content)</label>
+                <textarea id="promptText">[SYSTEM]
+Act as an ISMS Lead auditor. Assess whether the cybersecurity policy document defines controls in alignment with ISO/IEC 27002:2022 guidance.
+Output ONLY a valid JSON object with keys: "status" (CONFORMITY or NON-CONFORMITY), "confidence", "justification".
+
+[USER]
+CONTROL: A.5.11 — Return of assets
+Evaluate the CONTROL. Output ONLY JSON:</textarea>
+            </div>
+            <div class="form-group">
+                <label for="groundTruth">Ground Truth Status</label>
+                <select id="groundTruth">
+                    <option value="CONFORMITY">CONFORMITY</option>
+                    <option value="NON-CONFORMITY" selected>NON-CONFORMITY</option>
+                </select>
+            </div>
+            <button onclick="addTestCase()">Add Test Case to Queue</button>
+        </div>
+
+        <div class="card">
+            <h2>Configured Test Suite Queue (<span id="queueCount">0</span>)</h2>
+            <div style="max-height: 250px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Prompt Hash</th>
+                            <th>Prompt Preview</th>
+                            <th>Ground Truth</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suiteBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2 -->
+    <div id="tab-run" class="tab-pane">
+        <div class="card">
+            <h2>Evaluation Execution Settings</h2>
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="baseHost">Ollama Host Base URL</label>
+                    <input type="text" id="baseHost" value="http://localhost:11434">
+                </div>
+                <div class="form-group">
+                    <label>Select Models to Benchmark (Discovered Live)</label>
+                    <div id="modelCheckboxes" class="checkbox-group">
+                        <span style="color:var(--text-secondary); font-size:0.8rem;">Click refresh top-right to query local models...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="temp">Temperature</label>
+                    <input type="number" id="temp" value="0.0" step="0.1" min="0" max="2">
+                </div>
+                <div class="form-group">
+                    <label for="maxTokens">Max Input Tokens</label>
+                    <input type="number" id="maxTokens" value="1000">
+                </div>
+                <div class="form-group">
+                    <label for="margin">Margin / Penalty</label>
+                    <input type="number" id="margin" value="0.0" step="0.1">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                    <input type="checkbox" id="parallelFlag" style="width:auto; cursor:pointer;"> 
+                    <span>Execute queries in <strong>Parallel</strong></span>
+                </label>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button onclick="startEvaluation()">Run Evaluation Suite</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Real-time Execution Status Log</h2>
+            <div id="statusLog" style="background:#0f172a; border:1px solid var(--border-color); border-radius:0.375rem; padding:0.75rem; font-family:monospace; font-size:0.8rem; height:180px; overflow-y:auto; color:var(--text-secondary);">
+                System standing by.
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3 -->
+    <div id="tab-results" class="tab-pane">
+        <div class="card">
+            <h2>Analytical Performance Results</h2>
+            <div class="grid-2">
+                <div>
+                    <h3 style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Confusion Matrix</h3>
+                    <div class="confusion-matrix">
+                        <div></div>
+                        <div class="cm-header">Pred: Conf</div>
+                        <div class="cm-header">Pred: Non-Conf</div>
+                        <div class="cm-header">Actual: Conf</div>
+                        <div class="cm-cell" id="tp">TP: 0</div>
+                        <div class="cm-cell" id="fn">FN: 0</div>
+                        <div class="cm-header">Actual: Non-Conf</div>
+                        <div class="cm-cell" id="fp">FP: 0</div>
+                        <div class="cm-cell" id="tn">TN: 0</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Statistical Performance Metrics</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card"><div class="label">Accuracy</div><div class="value" id="m-acc">0.00</div></div>
+                        <div class="metric-card"><div class="label">Balanced Acc</div><div class="value" id="m-bacc">0.00</div></div>
+                        <div class="metric-card"><div class="label">Precision</div><div class="value" id="m-prec">0.00</div></div>
+                        <div class="metric-card"><div class="label">Recall / Sens</div><div class="value" id="m-rec">0.00</div></div>
+                        <div class="metric-card"><div class="label">Specificity</div><div class="value" id="m-spec">0.00</div></div>
+                        <div class="metric-card"><div class="label">F1 Score</div><div class="value" id="m-f1">0.00</div></div>
+                        <div class="metric-card"><div class="label">MCC</div><div class="value" id="m-mcc">0.00</div></div>
+                        <div class="metric-card"><div class="label">Cohen's Kappa</div><div class="value" id="m-kappa">0.00</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <h3 style="font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Model Predictions Trend (Conformity vs Non-Conformity Count)</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testSuite = [];
+        let availableModels = [];
+        let evaluationRunData = {};
+        let trendChartInstance = null;
+
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(16);
+        }
+
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        function logMessage(msg) {
+            const logBox = document.getElementById('statusLog');
+            logBox.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateSuiteTable() {
+            const tbody = document.getElementById('suiteBody');
+            document.getElementById('queueCount').innerText = testSuite.length;
+            tbody.innerHTML = '';
+            testSuite.forEach((test, idx) => {
+                const preview = test.prompt.length > 50 ? test.prompt.substring(0, 50) + '...' : test.prompt;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${idx + 1}</td>
+                        <td style="font-family:monospace; color:var(--text-secondary);">${test.hash}</td>
+                        <td style="font-family:monospace;">${escapeHtml(preview)}</td>
+                        <td><span class="badge ${test.groundTruth === 'CONFORMITY' ? 'badge-success' : 'badge-danger'}">${test.groundTruth}</span></td>
+                        <td><button class="secondary" style="width:auto; padding: 0.2rem 0.5rem; font-size:0.75rem;" onclick="removeTestCase(${idx})">Remove</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addTestCase() {
+            const promptVal = document.getElementById('promptText').value.trim();
+            if (!promptVal) { alert("Prompt payload cannot be empty."); return; }
+
+            const promptHash = simpleHash(promptVal);
+            if (testSuite.some(item => item.hash === promptHash)) {
+                alert("Redundant test case detected! Identical prompt configuration already exists.");
+                return;
+            }
+
+            testSuite.push({ hash: promptHash, prompt: promptVal, groundTruth: document.getElementById('groundTruth').value });
+            updateSuiteTable();
+            logMessage(`Added unique test case fingerprint [${promptHash}] to queue.`);
+            alert("Test case added successfully!");
+        }
+
+        function removeTestCase(idx) {
+            testSuite.splice(idx, 1);
+            updateSuiteTable();
+        }
+
+        // Fetch Live Local Models via Ollama Native Endpoint (/api/tags)
+        async function fetchLocalModels() {
+            const baseHost = document.getElementById('baseHost').value.replace(/\/+$/, '');
+            const tagsUrl = `${baseHost}/api/tags`;
+            
+            logMessage(`Querying live local engine models at: ${tagsUrl}`);
+            try {
+                const response = await fetch(tagsUrl);
+                if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
+                const data = await response.json();
+                
+                // Ollama native format returns { models: [ { name: "...", model: "..." }, ... ] }
+                availableModels = [];
+                if (data.models && Array.isArray(data.models)) {
+                    availableModels = data.models.map(m => m.model || m.name);
+                }
+
+                renderModelCheckboxes();
+                logMessage(`Discovered ${availableModels.length} active models locally: ${availableModels.join(', ')}`);
+            } catch (err) {
+                logMessage(`Error loading models: ${err.message}. If running locally, ensure CORS is enabled or OLLAMA_HOST is set.`);
+                availableModels = [];
+                renderModelCheckboxes();
+            }
+        }
+
+        function renderModelCheckboxes() {
+            const container = document.getElementById('modelCheckboxes');
+            container.innerHTML = '';
+            if (availableModels.length === 0) {
+                container.innerHTML = `<span style="color:var(--danger-color); font-size:0.8rem;">No models found. Check if Ollama is running and click 'Refresh'.</span>`;
+                return;
+            }
+            availableModels.forEach(model => {
+                container.innerHTML += `
+                    <label>
+                        <input type="checkbox" name="selectedModel" value="${model}" checked> ${model}
+                    </label>
+                `;
+            });
+        }
+
+        async function startEvaluation() {
+            if (testSuite.length === 0) { alert("Test suite queue is empty! Add prompts in Tab-1 first."); return; }
+
+            const selectedCheckboxes = document.querySelectorAll('input[name="selectedModel"]:checked');
+            const targetModels = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+            if (targetModels.length === 0) { alert("No models selected. Please select at least one installed model."); return; }
+
+            const baseHost = document.getElementById('baseHost').value.replace(/\/+$/, '');
+            const chatUrl = `${baseHost}/v1/chat/completions`; // OpenAI compatible chat route supported by Ollama natively
+            const temp = parseFloat(document.getElementById('temp').value);
+            const maxTokens = parseInt(document.getElementById('maxTokens').value);
+            const isParallel = document.getElementById('parallelFlag').checked;
+
+            logMessage(`Starting evaluation suite | Mode: ${isParallel ? 'Parallel' : 'Sequential'} | Target Models: ${targetModels.join(', ')}`);
+
+            let TP = 0, FP = 0, TN = 0, FN = 0;
+            let executionTasks = [];
+            evaluationRunData = {};
+
+            targetModels.forEach(model => {
+                evaluationRunData[model] = { conformity: 0, nonConformity: 0 };
+            });
+
+            testSuite.forEach((test, tIdx) => {
+                targetModels.forEach(model => {
+                    executionTasks.push({ test, model, tIdx });
+                });
+            });
+
+            if (isParallel) {
+                const promises = executionTasks.map(task => executeSingleQuery(task, chatUrl, temp, maxTokens));
+                const results = await Promise.all(promises);
+                results.forEach(res => {
+                    if (res) {
+                        if (res.TP) TP++;
+                        if (res.FP) FP++;
+                        if (res.TN) TN++;
+                        if (res.FN) FN++;
+                        if (res.pred === "CONFORMITY") evaluationRunData[res.model].conformity++;
+                        else evaluationRunData[res.model].nonConformity++;
+                    }
+                });
+            } else {
+                for (let i = 0; i < executionTasks.length; i++) {
+                    logMessage(`Executing sequential item ${i+1}/${executionTasks.length}...`);
+                    const res = await executeSingleQuery(executionTasks[i], chatUrl, temp, maxTokens);
+                    if (res) {
+                        if (res.TP) TP++;
+                        if (res.FP) FP++;
+                        if (res.TN) TN++;
+                        if (res.FN) FN++;
+                        if (res.pred === "CONFORMITY") evaluationRunData[res.model].conformity++;
+                        else evaluationRunData[res.model].nonConformity++;
+                    }
+                }
+            }
+
+            calculateMetrics(TP, FP, TN, FN);
+            renderTrendChart(targetModels);
+            logMessage("Evaluation execution complete! Check Tab-3 for analytics.");
+            alert("Evaluation execution complete! Navigate to Tab-3 to examine analytical outputs.");
+        }
+
+        async function executeSingleQuery(task, chatUrl, temp, maxTokens) {
+            try {
+                const response = await fetch(chatUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: task.model,
+                        messages: [{ role: "user", content: task.test.prompt }],
+                        temperature: temp,
+                        max_tokens: maxTokens,
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error status: ${response.status}`);
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("Response payload lacks valid JSON structure.");
+
+                const parsed = JSON.parse(jsonMatch[0]);
+                const predStatus = parsed.status ? parsed.status.trim().toUpperCase() : "NON-CONFORMITY";
+
+                logMessage(`[Model: ${task.model}] Test #${task.tIdx+1} -> Predicted: ${predStatus} | Truth: ${task.test.groundTruth}`);
+
+                const isPredPos = predStatus === "CONFORMITY";
+                const isTruthPos = task.test.groundTruth === "CONFORMITY";
+
+                return {
+                    model: task.model,
+                    pred: predStatus,
+                    TP: isPredPos && isTruthPos,
+                    FP: isPredPos && !isTruthPos,
+                    TN: !isPredPos && !isTruthPos,
+                    FN: !isPredPos && isTruthPos
+                };
+            } catch (err) {
+                logMessage(`[Model: ${task.model}] Error on Test #${task.tIdx+1}: ${err.message}`);
+                return null;
+            }
+        }
+
+        function calculateMetrics(TP, FP, TN, FN) {
+            document.getElementById('tp').innerText = `TP: ${TP}`;
+            document.getElementById('fn').innerText = `FN: ${FN}`;
+            document.getElementById('fp').innerText = `FP: ${FP}`;
+            document.getElementById('tn').innerText = `TN: ${TN}`;
+
+            const total = TP + FP + TN + FN;
+            if (total === 0) return;
+
+            const accuracy = (TP + TN) / total;
+            const sensitivity = (TP + FN) > 0 ? TP / (TP + FN) : 0;
+            const specificity = (TN + FP) > 0 ? TN / (TN + FP) : 0;
+            const balancedAccuracy = (sensitivity + specificity) / 2;
+            const precision = (TP + FP) > 0 ? TP / (TP + FP) : 0;
+            const f1 = (precision + sensitivity) > 0 ? (2 * precision * sensitivity) / (precision + sensitivity) : 0;
+            
+            const mccNumerator = (TP * TN) - (FP * FN);
+            const mccDenominator = Math.sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN));
+            const mcc = mccDenominator > 0 ? mccNumerator / mccDenominator : 0;
+
+            const p0 = accuracy;
+            const pYes = ((TP + FP) / total) * ((TP + FN) / total);
+            const pNo = ((TN + FN) / total) * ((TN + FP) / total);
+            const pe = pYes + pNo;
+            const kappa = pe < 1 ? (p0 - pe) / (1 - pe) : 0;
+
+            document.getElementById('m-acc').innerText = accuracy.toFixed(2);
+            document.getElementById('m-bacc').innerText = balancedAccuracy.toFixed(2);
+            document.getElementById('m-prec').innerText = precision.toFixed(2);
+            document.getElementById('m-rec').innerText = sensitivity.toFixed(2);
+            document.getElementById('m-spec').innerText = specificity.toFixed(2);
+            document.getElementById('m-f1').innerText = f1.toFixed(2);
+            document.getElementById('m-mcc').innerText = mcc.toFixed(2);
+            document.getElementById('m-kappa').innerText = kappa.toFixed(2);
+        }
+
+        function renderTrendChart(models) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const conformityCounts = models.map(m => evaluationRunData[m] ? evaluationRunData[m].conformity : 0);
+            const nonConformityCounts = models.map(m => evaluationRunData[m] ? evaluationRunData[m].nonConformity : 0);
+
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: models,
+                    datasets: [
+                        { label: 'Conformity Count', data: conformityCounts, borderColor: '#10b981', backgroundColor: '#10b981', fill: false, tension: 0.1 },
+                        { label: 'Non-Conformity Count', data: nonConformityCounts, borderColor: '#ef4444', backgroundColor: '#ef4444', fill: false, tension: 0.1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#f8fafc' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#334155' } }
+                    }
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        window.onload = () => {
+            updateSuiteTable();
+            fetchLocalModels();
+        };
+    </script>
+</body>
+</html>
