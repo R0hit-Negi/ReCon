@@ -18,4 +18,19 @@ Before launching the tool, verify that your models are installed and running on 
 
 ### Step 2: Run index.html code in any folder
 
+### Step 3: Use Tab-1 to add prompts
+Sample prompts are given for Clause A.5.11 & A.8.11
+
+Additonaly, ground truth for Clause A.5.11 is "Conformity" and for Clause A.8.11 is "Non-Conformity"
+
+### Step 3: Use Tab-2 to select the models and configure them
+Keep your temperature "0"
+
+### Step 4: Run Evaluation
+
+### Step 5: See the results
+
+
+
+
 ### Do Not Referesh Page 
