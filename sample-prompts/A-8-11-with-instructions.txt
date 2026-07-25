@@ -1,0 +1,57 @@
+[SYSTEM]
+Act as an ISMS Lead auditor. Assess whether the cybersecurity policy document defines controls in alignment with ISO/IEC 27002:2022 guidance.
+Scope:
+- Evaluate ONLY documented policy content
+- Do NOT assess implementation or evidence
+- Do NOT infer unstated intent
+
+Evaluation Criteria (ALL required for conformity):
+- Control objective is clear
+- Requirement is mandatory (shall/must)
+- Requirement is specific and actionable
+- Scope/applicability is defined.
+- Responsibility is assigned
+
+
+
+STANDARD: ISO 27002:2022  |  SECTOR: Financial Services — Banking
+
+===
+
+AUDIT RULES (apply strictly in order):
+1. If ANY criterion is completely missing → NON-CONFORMITY.
+2. If ALL are present → CONFORMITY.
+3. When uncertain → NON-CONFORMITY.
+4. Confidence scoring:
+   - 90-100 : policy is explicit, specific, assigns responsibility, and defines enforcement/review for every obligation
+   - 55-89  : mostly covered but missing some specifics, responsibility gaps, or incomplete enforcement definition
+   - 30-54  : control topic mentioned but vague, generic, or missing key elements
+   - 0-29   : absent or only tangentially referenced
+
+===
+
+Output ONLY a valid JSON object — no text, explanation, markdown, or commentary before or after the JSON.
+
+{
+  "status": "<CONFORMITY or NON-CONFORMITY>",
+  "confidence": <integer 0-100>,
+  "justification": "<one precise sentence stating the verdict, explicitly supported with evidence references including page number, section number, sub-section number, and/or heading from the provided policy chunks only>",
+  "strengths": "<comma-separated list of key elements that are well-defined (ONLY if CONFORMITY, else NONE)>",
+  "gaps": "<comma-separated list of missing or under-specified policy elements, or NONE>",
+  "obligations": [
+    {"req": "<obligation name>", "met": "<YES or NO>", "note": "<Chunk N — policy detail, max 10 words>"}
+  ]
+}
+
+[USER]
+CONTROL     : A.8.11 — Data masking
+REQUIREMENT : Data masking: Data masking shall be used in accordance with the organization’s topic-specific policy on access control and other related policies, and business requirements, taking applicable legislation into consideration
+
+POLICY EVIDENCE (5 chunks from submitted policy document):
+[Chunk 1 | Data Management Policy > Policy] Policy Data Acquisition There are no Implementation group safeguards that support this portion of the data management process. Data Inventory IT must conduct an inventory of data on an annual basis. All sensitive data must be marked accordingly in the data inventory. A data owner must be associated with all data tracked within the inventory. Data with specific data retention needs must be labeled accordingly. All data owners are required to contact IT upon the creation of, or obtaining, sensitive data to ensure the data is tracked within the data inventory. Data Classification IT must establish and enforce labels for sensitive data. IT must review data classification labels and their usage on an annual basis. Data Protection IT must configure access control lists on enterprise assets in accordance with users need to know. This is to include laptops, smartphones, tablets, centralized file systems, remote file systems, databases, and all applications. Sensitive data must be encrypted on all user devices. Data Handling IT must develop and maintain a written data retention plan. All data and documents must be preserved for the appropriate amount of time as dictated by regulatory, legal, and business requirements. Data Disposal IT, or other authorized parties, must destroy data that have outlasted their specified retention timeframes.
+[Chunk 2 | Data Management Policy > Responsibility] Data Management Policy Purpose Managing data within an enterprise includes data classification, inventory, handling, retention, and disposal. The Data Management Policy provides the processes and procedures for governing data within the enterprise. This includes creating a data inventory and classifying data based on sensitivity. Additionally, procedures for securely protecting data from unauthorized access or modification alongside appropriate for methods for how users should handle their data during their day-to-day work activities. Finally, authorized methods to destroy and remove data from the enterprise are discussed.
+[Chunk 3 | Acceptable Use Policy > Exceptions] Applicability This policy is meant to apply to all users within the enterprise who receive and utilize enterprise assets, which includes all members of the workforce (both on-site and remote), third-party vendors, contractors, service providers, consultants, or any other individual that operates an enterprise asset. It is the users responsibility to read and understand this policy and to conduct their activities in accordance with its terms. In addition, users must read and understand the enterprises Information Security Policy and its associated standards. Users who find the policy statements within this document to be unclear are encouraged to reach out to IT in order to clarify any remaining ambiguities.
+[Chunk 4 | Acceptable Use Policy > Policy] Policy User Responsibilities Users must only use approved technology and services. All enterprise assets are on loan to users so that essential job functions may be performed. Upon separation from the enterprise or contract termination, all supplied IT assets, and the associated data must be returned by the user. Users must secure the physical environment around their workstation and lock their computers when stepping away. Users must ensure that Personally Identifiable Information (PII), confidential, and any sensitive data that may be covered by government or other regulation, is not readily available or accessible on their desks or within their workspace. All users must take appropriate care to protect information, systems and related assets within their custody or care from loss, damage, or harm. Lost or damaged equipment must be reported to IT as soon as practical. Users must store their passwords in a secure manner. Approved password managers must be used to store passwords digitally. Users-assigned accounts must only access assets, operating systems, applications, files, and data to which they have been granted access. The ability to inadvertently read, execute, modify, delete, or copy data does not imply permission to do so.
+[Chunk 5 | Security Awareness Training Policy > Policy] Policy Assess There are no IG1 safeguards that support this portion of the security awareness training process. Develop A program for performing security awareness training must be established. This process must be documented and approved. Educate Users must receive security awareness training, at a minimum, on an annual basis. All new users must receive cybersecurity awareness training before being granted access to enterprise assets. Users must be trained on how to recognize social engineering attacks. Users must be trained on best practices for authentication in the enterprise. Users must be trained on best practices for handling enterprise data. Training must be included on the following subjects as it pertains to the enterprises Data Management Policy: Identifying sensitive data Storing sensitive data Transferring sensitive data Archiving sensitive data Destroying sensitive data Any legal and / or regulatory obligations of the above. Clear screen and clean desk best practices must be included in the training. Timeframes for automatic session locking for enterprise assets are contained within the Secure Configuration Management Policy. Users must be trained on the causes of unintentional data exposure in the enterprise. Users must be trained on how to recognize and report security incidents. Users must be trained on how to identify and report if their enterprise assets are missing security updates.
+
+Evaluate the CONTROL above. Output ONLY the JSON object:

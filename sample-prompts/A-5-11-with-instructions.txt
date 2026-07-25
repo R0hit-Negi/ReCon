@@ -1,0 +1,57 @@
+[SYSTEM]
+Act as an ISMS Lead auditor. Assess whether the cybersecurity policy document defines controls in alignment with ISO/IEC 27002:2022 guidance.
+Scope:
+- Evaluate ONLY documented policy content
+- Do NOT assess implementation or evidence
+- Do NOT infer unstated intent
+
+Evaluation Criteria (ALL required for conformity):
+- Control objective is clear
+- Requirement is mandatory (shall/must)
+- Requirement is specific and actionable
+- Scope/applicability is defined.
+- Responsibility is assigned
+
+
+
+STANDARD: ISO 27002:2022  |  SECTOR: Education — Higher Education
+
+===
+
+AUDIT RULES (apply strictly in order):
+1. If ANY criterion is completely missing → NON-CONFORMITY.
+2. If ALL are present → CONFORMITY.
+3. When uncertain → NON-CONFORMITY.
+4. Confidence scoring:
+   - 90-100 : policy is explicit, specific, assigns responsibility, and defines enforcement/review for every obligation
+   - 55-89  : mostly covered but missing some specifics, responsibility gaps, or incomplete enforcement definition
+   - 30-54  : control topic mentioned but vague, generic, or missing key elements
+   - 0-29   : absent or only tangentially referenced
+
+===
+
+Output ONLY a valid JSON object — no text, explanation, markdown, or commentary before or after the JSON.
+
+{
+  "status": "<CONFORMITY or NON-CONFORMITY>",
+  "confidence": <integer 0-100>,
+  "justification": "<one precise sentence stating the verdict, explicitly supported with evidence references including page number, section number, sub-section number, and/or heading from the provided policy chunks only>",
+  "strengths": "<comma-separated list of key elements that are well-defined (ONLY if CONFORMITY, else NONE)>",
+  "gaps": "<comma-separated list of missing or under-specified policy elements, or NONE>",
+  "obligations": [
+    {"req": "<obligation name>", "met": "<YES or NO>", "note": "<Chunk N — policy detail, max 10 words>"}
+  ]
+}
+
+[USER]
+CONTROL     : A.5.11 — Return of assets
+REQUIREMENT : Personnel and other interested parties as appropriate shall return all the organization’s assets in their possession upon change or termination of their employment, contract or agreement.
+
+POLICY EVIDENCE (5 chunks from submitted policy document):
+[Chunk 1 | p.81 | 1 Asset Owner > 4.6 Lost, Stolen, or Damaged IT Assets] through the my-organization Incident Management process. 4.5.4 Employee Offboarding All departing faculty members, staff, researchers, and contractual personnel shall return my-organization- owned IT assets to the designated authority on or before their last working day.  Human Resources (HR), in coordination with the IT Services team, shall ensure that all issued assets are identified, collected, and formally returned for reassignment or further processing. If assets are not returned by the last working day, the individual shall be required to immediately return or securely ship the assets to the Institute. Failure to do so may result in recovery of replacement costs and, where applicable, further administrative or legal action in accordance with my-organization regulations. In cases of internal transfer between departments or centres within my-organization, assigned IT assets shall remain with the original department unless formally reassigned through the IT Services team. 4.6 Lost, Stolen, or Damaged IT Assets my-organization does not provide insurance coverage for loss, theft, or damage of IT assets. Users are respon- sible for the reasonable care, secure handling, and authorised use of all Institute-owned IT assets assigned to them. Any incident that compromises the confidentiality, integrity, or availability of an IT asset shall be
+[Chunk 2 | p.82 | 1 Asset Owner > 4.7 Asset Return, Disposal, and Sanitisation] 4. Upon verification and approval, the IT Services team shall arrange for a replacement asset based on availability and institutional approval. 5. Replacement assets may differ in configuration or specifications depending on inventory availabil- ity and asset lifecycle standards.  6. Costs arising from negligence, misuse, unauthorised modifications, or repeated incidents may be recovered from the responsible individual or department in accordance with my-organization policies. 4.7 Asset Return, Disposal, and Sanitisation All IT assets that are surplus, replaced, damaged beyond repair, or have reached the end of their useful life shall be returned to the my-organization IT Services team for reassignment, secure recycling, or disposal. Employees, students, or staff members shall not retain computing devices replaced under refresh or replacement programmes. Asset return requests shall be initiated through the Institutes approved Helpdesk or Services Portal. Prior to disposal, recycling, or repurposing, all data stored on IT assets shall be securely sanitised. The sanitisation method shall be selected based on data sensitivity and asset type and may include low-level formatting, cryptographic erasure, or recognised industry-standard wiping methods. Media containing confidential, sensitive, or personally identifiable information (PII) that is not being
+[Chunk 3 | p.77 | 1 Asset Owner] , disposed, lost, or stolen assets are promptly updated in the asset inventory. Ensuring that shared devices are allocated to the appropriate school or department when not assigned to a specific individual. Ensuring staff return all assigned IT assets upon transfer or end  of employment. 2 AssetCustodian/ Using assigned IT assets responsibly and ensuring they are not End User used by unauthorised third parties. Maintaining the physical security and proper care of assigned de- vices whether on campus, off campus, in use, or stored. Immediately reporting loss, theft, or damage of IT assets to the IT Service Desk. Ensuringthatdevicesleftoncampusovernightarestoredsecurely in a locked location. Not installing unauthorised or unlicensed software; software re- quests must follow approved institutional processes. Coordinating all repairs through the IT Service Desk; unautho- rised repairs are prohibited and may void warranties. Returning IT assets to the IT Service Desk for reallocation rather than transferring them informally to another individual. Informing the IT Service Desk before transferring to another de- partment to ensure asset inventory accuracy. Ensuringlaptopstakenhomearesafeguardedandavailableduring emergencies or unexpected Institute closures.
+[Chunk 4 | p.81–82 | 1 Asset Owner > 4.6 Lost, Stolen, or Damaged IT Assets] of IT assets. Users are respon- sible for the reasonable care, secure handling, and authorised use of all Institute-owned IT assets assigned to them. Any incident that compromises the confidentiality, integrity, or availability of an IT asset shall be  reported without delay through the Institutes defined reporting channels. 4.6.1 Reporting and Replacement Procedure 1. Loss, theft, or suspected theft of an IT asset shall be reported immediately to the Institute Security Office or the nearest police station. In such cases, a First Information Report (FIR) shall be filed and a copy submitted to the IT Services team for official records and further action. 2. A formal incident report shall be submitted detailing the asset type, asset identification number, last known location, and a brief description of the incident. 3. Damaged IT assets shall be returned to the IT Services team for inspection, assessment, and documentation. Failure to return a damaged asset may result in the incident being treated as a loss. 4. Upon verification and approval, the IT Services team shall arrange for a replacement asset based on availability and institutional approval. 5. Replacement assets may differ in configuration or specifications depending on inventory availabil- ity and asset lifecycle standards.
+[Chunk 5 | p.76–77 | 1 Asset Owner] logical location. (f) Assigned user, role, or department. 4. All inventoried assets shall either remain under the custody of the IT Services unit or be formally assigned to a faculty member, staff member, researcher, or department.  5. Loss, theft, or suspected compromise of any asset shall be reported immediately to the IT Service Desk and Institute Security, as applicable. 6. Any discrepancies in asset location, ownership, or usage shall be promptly reported and corrected in the asset inventory. 4.2 Responsibilities of Asset Owners and Asset Custodians The asset owners and asset custodians shall be responsible for managing information and IT assets as outlined in the table below. Table 3.1: Roles and Responsibilities for IT Asset Management # Role Key Responsibilities 1 Asset Owner Ensuring that all IT assets under their department are recorded in the central IT asset inventory. Classifying information and ensuring that asset records are re- viewed and updated periodically. Ensuring that newly purchased, transferred, disposed, lost, or stolen assets are promptly updated in the asset inventory. Ensuring that shared devices are allocated to the appropriate school or department when not assigned to a specific individual. Ensuring staff return all assigned IT assets upon transfer or end
+
+Evaluate the CONTROL above. Output ONLY the JSON object:
